@@ -1,0 +1,7 @@
+src/__pycache__/
+src/Start/__pycache__/
+src/Admin/__pycache__/
+src/Inventory/__pycache__/
+src/build/
+src/dist/
+src/env/
