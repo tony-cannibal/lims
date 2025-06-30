@@ -5,3 +5,4 @@ src/Inventory/__pycache__/
 src/build/
 src/dist/
 src/env/
+lims/
