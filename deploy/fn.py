@@ -34,6 +34,48 @@ def createsTables(db):
                 );
                     """
         )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS monthly_wip (
+               id INT AUTO_INCREMENT PRIMARY KEY,
+               wip_id VARCHAR(50) UNIQUE NOT NULL,
+               centro VARCHAR(50),
+               lugar_de_elaboracion VARCHAR(50),
+               estado VARCHAR(6), 
+               modelo VARCHAR(50),
+               grupo_artic_externo VARCHAR(50),
+               material VARCHAR(50),
+               revicion VARCHAR(50),
+               unidad VARCHAR(50),
+               feeder_21700 VARCHAR(50),
+               feeder_21800 VARCHAR(50),
+               lote VARCHAR(15),
+               rework VARCHAR(15),
+               qty VARCHAR(50),
+               item VARCHAR(50),
+               ranking INT,
+               area VARCHAR(10),
+               fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+               );"""
+        )
+
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS wip_inventory (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                wip_id VARCHAR(50) UNIQUE NOT NULL,
+                lote VARCHAR(10),
+                modelo VARCHAR(20),
+                item VARCHAR(50),
+                num_parte VARCHAR(50),
+                cantidad INT,
+                area VARCHAR(10),
+                rank INT,
+                estacion VARCHAR(20),
+                fecha TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );"""
+        )
+
     except mariadb.Error as e:
         print(f"Error: {e}")
 

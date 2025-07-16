@@ -3,7 +3,11 @@ import fn
 from datetime import datetime
 
 
-file = "ENERO - JUNIO 2025.xlsx"
+files = [
+    "ENERO - JUNIO 2025.xlsx",
+    "ENERO - MAYO 2024.xlsx",
+    "JUNIO - DICIEMBRE 2024.xlsx",
+]
 
 db = {
     "user": "yura_admin",
@@ -15,10 +19,12 @@ db = {
 
 if __name__ == "__main__":
     fn.createsTables(db)
-    data = fn.getZpprData(file)
+
+    for i in files:
+        data = fn.getZpprData(i)
+        fn.insertIntoZppr(db, data)
 
     # print(data[0][3].to_pydatetime().strftime("%Y-%m-%m"))
     # print(datetime.fromtimestamp(data[0][3]).strftime("%Y-%m-%d"))
-    fn.insertIntoZppr(db, data)
     # for i in data:
     #     print()
