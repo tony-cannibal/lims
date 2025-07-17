@@ -79,16 +79,35 @@ def ceckDatabase(date, connection):
         return False
 
 
-def insertIntoDb(filedir, columns, connection, month, area):
+def getRework(lot: str, connection: dict) -> str:
+    con = mariadb.connect(**connection)
+    cur = con.cursor()
+    cur.execute(
+        """
+        SELECT * FROM zppr1100 WHERE lot = %s LIMIT 10;
+                """,
+        (lot,),
+    )
+    res = cur.fetchall()
+    if not res:
+        return ""
+    res = [list(i) for i in res]
+    res = res[0][13]
+    print(res)
+    return res
+
+
+def insertIntoDb(filedir: str, columns: list, connection: dict, month: str, area: dict):
     """Insert wip data into database."""
     wip = pd.read_excel(filedir).values.tolist()
 
     con = mariadb.connect(**connection)
     cur = con.cursor()
     for i in wip:
+        rework = getRework(i[columns[9]], connection)
         cur.execute(
             """
-                INSERT INTO wip(
+                INSERT INTO monthly_wip(
                     wip_id, 
                     centro, 
                     lugar_de_elaboracion, 
@@ -107,25 +126,41 @@ def insertIntoDb(filedir, columns, connection, month, area):
                     area
                 )
                 VALUES(
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s);
+                    %s, 
+                    %s, 
+                    %s, 
+                    %s, 
+                    %s, 
+                    %s, 
+                    %s, 
+                    %s, 
+                    %s, 
+                    %s, 
+                    %s, 
+                    %s,
+                    %s, 
+                    %s, 
+                    %s, 
+                    %s
+                );
                     """,
             (
-                month + str(i[18]),
-                i[columns[0]],
-                i[columns[1]],
-                i[columns[2]],
-                i[columns[3]],
-                i[columns[4]],
-                i[columns[5]],
-                i[columns[6]],
-                i[columns[7]],
-                i[columns[8]],
-                i[columns[9]],
-                i[columns[10]],
-                i[columns[11]],
-                i[columns[12]],
-                area[i[3]],
+                month + str(i[18]),  # wip_id
+                i[columns[0]],  # Centro
+                i[columns[1]],  # lugar_de_elaboracion
+                i[columns[2]],  # modelo
+                i[columns[3]],  # grupo
+                i[columns[4]],  # Material
+                i[columns[5]],  # revicion
+                i[columns[6]],  # unidad
+                i[columns[7]],  # feeder_21700
+                i[columns[8]],  # feeder_21800
+                i[columns[9]],  # lote
+                rework,
+                i[columns[10]],  # qty
+                i[columns[11]],  # item
+                i[columns[12]],  # rank
+                area[i[3]],  # area
             ),
         )
     con.commit()
@@ -146,4 +181,4 @@ def deleteData(month, connection):
 
 if __name__ == "__main__":
     # insertIntoDb(wip, columns, database)
-    pass
+    getRework("4224C30001", database)
