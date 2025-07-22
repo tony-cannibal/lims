@@ -93,7 +93,6 @@ def getRework(lot: str, connection: dict) -> str:
         return ""
     res = [list(i) for i in res]
     res = res[0][13]
-    print(res)
     return res
 
 

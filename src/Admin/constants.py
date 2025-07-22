@@ -1,18 +1,17 @@
+import tkinter as tk
 
-borderColor = "#ccc"
+borderColor = "#000"
 
 labelConf = {
-    "highlightthickness": 1,
-    "highlightbackground": borderColor,
-    "highlightcolor": borderColor
+    # "highlightthickness": 0,
+    # "highlightbackground": borderColor,
+    # "highlightcolor": borderColor,
+    "relief": tk.SOLID,
+    "borderwidth": 1,
 }
 
 
-columns = [
-    0, 3, 5, 6, 7,
-    8, 9, 10, 11,
-    18, 21, 23, 24
-]
+columns = [0, 3, 5, 6, 7, 8, 9, 10, 11, 18, 21, 23, 24]
 
 
 area = {
