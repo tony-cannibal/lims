@@ -1,5 +1,7 @@
 import mariadb
+import os
 import configparser
+import pandas as pd
 from datetime import date
 from . import constants as cn
 
@@ -58,13 +60,14 @@ def getMonth(connection):
     if auto:
         # print(f"{cn.month[fecha[0:2]]}{fecha[2:]}")
         # return date.today().strftime("%m%y")
+
         return f"{cn.month[fecha[0:2]]}{fecha[2:]}"
     else:
         print(month)
         return month
 
 
-def getWip(connection: dict, area: str, month: str) -> (dict, dict):
+def getWip(connection: dict, area: str, month: str) -> dict:
     con = mariadb.connect(**connection)
     cur = con.cursor()
     cur.execute(
@@ -86,7 +89,7 @@ def getInventory(connection, area, month):
     cur = con.cursor()
     cur.execute(
         """
-    SELECT * FROM inventario WHERE id LIKE %s AND area = %s;
+    SELECT * FROM wip_inventory WHERE wip_id LIKE %s AND area = %s;
                 """,
         (month + "%", area),
     )
@@ -94,7 +97,8 @@ def getInventory(connection, area, month):
     cur.close()
     con.close()
     inventario = [list(i) for i in inventario]
-    inventario = {i[1]: i for i in inventario}
+    # print(inventario)
+    inventario = {i[2]: i for i in inventario}
     return inventario
 
 
@@ -113,16 +117,32 @@ def checkCode(code):
         return "err"
 
 
-def captureRecord(record, mes, connection):
+def captureRecord(record, connection):
     con = mariadb.connect(**connection)
     cur = con.cursor()
     cur.execute(
         """
-    INSERT INTO inventario(
-        id, lote, modelo, item, num_parte, cantidad, area, estacion)
-        VALUES(
-        %s, %s, %s, %s, %s, %s, %s, %s
-            );""",
+    INSERT INTO wip_inventory(
+            wip_id,
+            lote,
+            modelo,
+            item,
+            num_parte,
+            cantidad,
+            area,
+            rank,
+            estacion
+        ) VALUES(
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s,
+            %s
+        );""",
         (
             record[0],
             record[1],
@@ -132,10 +152,24 @@ def captureRecord(record, mes, connection):
             record[5],
             record[6],
             record[7],
+            record[8],
         ),
     )
     con.commit()
-    cur.close()
+    con.close()
+
+
+def updatemonthly_wip(wip_id, connection):
+    con = mariadb.connect(**connection)
+    cur = con.cursor()
+    cur.execute(
+        """
+    UPDATE monthly_wip SET estado = %s WHERE wip_id = %s;
+                """,
+        ("ok", wip_id),
+    )
+    con.commit()
+    con.close()
 
 
 def checkAnomaly(identifier, connection):
@@ -166,3 +200,31 @@ def saveAnomaly(code, identifier, connection):
     )
     con.commit()
     cur.close()
+
+
+def getRework(wip):
+    rework = {}
+
+    for i in wip:
+        if len(wip[i][13]) > 0:
+            rework[wip[i][13]] = wip[i][12]
+
+    return rework
+
+
+def wipToExcel(month, area, connection, filename):
+    con = mariadb.connect(**connection)
+    cur = con.cursor()
+    cur.execute(
+        """
+    SELECT * FROM monthly_wip WHERE wip_id LIKE %s AND area = %s;
+                """,
+        (month + "%", area),
+    )
+    wip = cur.fetchall()
+    cur.close()
+    con.close()
+    wip = [list(i) for i in wip]
+    df = pd.DataFrame(wip, columns=cn.saveHeadings)
+    df.to_excel(filename, index=False)
+    os.startfile(filename)

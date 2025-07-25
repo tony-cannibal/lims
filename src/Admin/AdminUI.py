@@ -143,6 +143,70 @@ class Admin(ttk.Frame):
         self.wipStatusLabel.grid(row=5, column=0, columnspan=6, pady=(20, 0))
 
         #######################################################################
+        # Add zppr110
+
+        self.addZppr110Data = ttk.Frame(self.notebook)
+        self.addZppr110Data.pack(fill="both", expand=True)
+
+        self.addZppr110Data.grid_columnconfigure(
+            (0, 1, 2, 3, 4, 5), weight=1, uniform="column"
+        )
+
+        customFont = font.Font(family="Arial", size=20, slant="italic")
+        self.label2 = tk.Label(
+            self.addZppr110Data, text="Subir Zppr1100", font="Arial 40"
+        )
+        # font=controller.title_font)
+        self.label2.grid(row=0, column=0, columnspan=6, pady=(20, 30), padx=(10, 0))
+
+        self.directory2 = ttk.Label(
+            self.addZppr110Data, font=customFont, **cn.labelConf
+        )
+        self.directory2.grid(
+            row=1, column=0, columnspan=5, sticky="NSEW", padx=(10, 10), pady=(0, 40)
+        )
+
+        buttonFont = font.Font(family="Arial", size=20, slant="italic")
+        self.button2 = tk.Button(
+            self.addZppr110Data,
+            text="Buscar",
+            font=buttonFont,
+            padx=0,
+            command=self.searchForFile,
+        )
+        self.button2.grid(
+            row=1, column=5, columnspan=1, sticky="EW", pady=(0, 40), padx=(0, 10)
+        )
+
+        self.monthLabel2 = tk.Label(self.addZppr110Data, text="Mes", font="Arial 20")
+        self.monthLabel2.grid(row=4, column=0, columnspan=1)
+        self.monthEntry2 = tk.Entry(
+            self.addZppr110Data, justify="center", font="Arial 20"
+        )
+        self.monthEntry2.grid(row=4, column=1, sticky="NS")
+
+        self.yearLabel2 = tk.Label(self.addZppr110Data, text="Año", font="Arial 20")
+        self.yearLabel2.grid(row=4, column=2, columnspan=1)
+        self.yearEntry2 = tk.Entry(
+            self.addZppr110Data, justify="center", font="Arial 20"
+        )
+        self.yearEntry2.grid(row=4, column=3, sticky="NS")
+
+        self.button2 = tk.Button(
+            self.addZppr110Data,
+            text="Subir",
+            font=buttonFont,
+            padx=0,
+            command=self.uploadData,
+        )
+        self.button2.grid(row=4, column=4, columnspan=2, sticky="EW", padx=(40, 10))
+
+        self.zpprStatusLabel = tk.Label(
+            self.addZppr110Data, text="", fg="red", font="Arial 20"
+        )
+        self.zpprStatusLabel.grid(row=5, column=0, columnspan=6, pady=(20, 0))
+
+        #######################################################################
         # Delete Data Tab
 
         self.deleteDataFrame = ttk.Frame(self.notebook)
@@ -199,6 +263,7 @@ class Admin(ttk.Frame):
 
         self.notebook.add(self.configFrame, text="Configuracion")
         self.notebook.add(self.addDataFrame, text="Agregar Wip")
+        self.notebook.add(self.addZppr110Data, text="Agregar Zppr1100")
         self.notebook.add(self.deleteDataFrame, text="Borrar Datos")
 
         self.setOptionFields()
@@ -235,6 +300,17 @@ class Admin(ttk.Frame):
         truncated = self.filename.split("/")[-1]
         self.directory.config(text=truncated)
 
+    def searchForZpprFile(self):
+        filetypes = (("excel file", "*.xlsx"), ("All files", "*.*"))
+        filename = fd.askopenfilename(
+            title="Buscar Archivo",
+            initialdir=f"{Path.home()}/Documents",
+            filetypes=filetypes,
+        )
+        self.filename2 = filename
+        truncated = self.filename.split("/")[-1]
+        self.directory2.config(text=truncated)
+
     def uploadData(self):
         month = self.monthEntry.get()
         year = self.yearEntry.get()
@@ -258,6 +334,22 @@ class Admin(ttk.Frame):
         self.wipStatusLabel.config(
             text="Los datos se cargaron exitosamente.", fg="green"
         )
+
+    def uploaZpprdData(self):
+
+        if self.filename == "":
+            self.wipStatusLabel.config(text="Debes selecionar un archivo.", fg="red")
+            return
+
+        fn.insertIntoDb(self.filename, cn.columns, self.database, date, cn.area)
+        self.wipStatusLabel.config(
+            text="Los datos se cargaron exitosamente.", fg="green"
+        )
+
+    def uploadZpprData(self):
+        month = self.monthEntry.get()
+        year = self.yearEntry.get()
+        date = month + year
 
     def deleteWip(self):
         month = self.deleteMonthEntry.get() + self.deleteYearEntry.get()

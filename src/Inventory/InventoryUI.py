@@ -1,5 +1,8 @@
 import tkinter as tk
 from tkinter import font
+from tkinter import filedialog as fd
+from pathlib import Path
+
 
 # from ttkbootstrap import Style
 from tkinter import ttk
@@ -18,6 +21,7 @@ class Inventory(ttk.Frame):
         self.mes = fn.getMonth(self.database)
         self.wip = fn.getWip(self.database, self.area, self.mes)
         self.wipLength = len(self.wip)
+        self.rework = fn.getRework(fn.getWip(self.database, self.area, self.mes))
         self.inventory = {}
         self.inventoryLength = len(self.inventory)
 
@@ -25,7 +29,9 @@ class Inventory(ttk.Frame):
         # Data Capture
         self.grid_columnconfigure((0, 1, 2, 3, 4, 5), weight=1, uniform="column")
 
-        self.label_1 = ttk.Label(self, text="INVENTARIO DE WIP FEEDER", font="arial 14")
+        self.label_1 = ttk.Label(
+            self, text=f"INVENTARIO DE WIP FEEDER {self.area}", font="arial 14"
+        )
         self.label_1.grid(row=0, column=0, columnspan=6)
         customFont = font.Font(family="Arial", size=14)
 
@@ -112,9 +118,9 @@ class Inventory(ttk.Frame):
         )
         self.history.tag_configure("oddrow", background="#333333")
         self.history.tag_configure("evenrow", background="#222222")
-        for i in range(6):
+        for i in range(8):
             self.history.heading(cn.columnHeadigns[i], text=cn.columnHeadigns[i])
-        for i in range(6):
+        for i in range(8):
             self.history.column(
                 cn.columnHeadigns[i], width=cn.columnWith[i], anchor="center"
             )
@@ -127,15 +133,23 @@ class Inventory(ttk.Frame):
         self.faltantes.tag_configure("oddrow", background="#333333")
         self.faltantes.tag_configure("evenrow", background="#222222")
 
-        for i in range(6):
+        for i in range(8):
             self.faltantes.heading(cn.columnHeadigns[i], text=cn.columnHeadigns[i])
-        for i in range(6):
+        for i in range(8):
             self.faltantes.column(
                 cn.columnHeadigns[i], width=cn.columnWith[i], anchor="center"
             )
         self.faltantes.pack(expand=1, fill="both")
 
         self.tabWidget.grid(column=0, row=2, columnspan=3, sticky="EW", pady=5, padx=5)
+
+        self.toExcel = tk.Button(
+            self,
+            text="Excel",
+            font="Arial 14",
+            command=self.actualidadExcel,
+        )
+        self.toExcel.grid(row=7, column=5, pady=10)
 
         ##############################################################
         # set
@@ -149,6 +163,17 @@ class Inventory(ttk.Frame):
     #     codigo = self.captura.get()
     #     self.captura.delete(0, 'end')
     #     codigo = fn.checkCode(codigo)
+    def actualidadExcel(self):
+        filetypes = (("excel file", "*.xlsx"), ("All files", "*.*"))
+        save_as = fd.asksaveasfilename(
+            title="Guardar Como.",
+            initialdir=f"{Path.home()}/Documents",
+            filetypes=filetypes,
+            defaultextension=".xlsx",
+        )
+        # actualidad = fn.getWip(self.database, self.area, self.mes)
+        fn.wipToExcel(self.mes, self.area, self.database, save_as)
+        print(save_as)
 
     def updateTables(self):
         self.history.delete(*self.history.get_children())
@@ -157,11 +182,13 @@ class Inventory(ttk.Frame):
         for i in self.inventory:
             row = (
                 inv_index,
-                self.inventory[i][1],
-                self.inventory[i][2],
-                self.inventory[i][3],
-                self.inventory[i][4],
-                self.inventory[i][5],
+                self.inventory[i][2],  # lote
+                self.wip[self.inventory[i][2]][13],  # retrabajo
+                self.inventory[i][3],  # modelo
+                self.inventory[i][4],  # item
+                self.inventory[i][5],  # np
+                self.inventory[i][6],  # cantidad
+                self.inventory[i][8],  # prioridad
             )
             if inv_index % 2 == 0:
                 self.history.insert("", tk.END, values=row, tags=("evenrow",))
@@ -175,11 +202,13 @@ class Inventory(ttk.Frame):
             if i not in self.inventory:
                 row = (
                     hist_index,
-                    self.wip[i][10],
-                    self.wip[i][3],
-                    self.wip[i][12],
+                    self.wip[i][12],  # lote
+                    self.wip[i][13],  # rework
                     self.wip[i][5],
-                    self.wip[i][11],
+                    self.wip[i][15],
+                    self.wip[i][7],
+                    self.wip[i][14],
+                    self.wip[i][16],
                 )
                 if hist_index % 2 == 0:
                     self.faltantes.insert("", tk.END, values=row, tags=("evenrow"))
@@ -191,6 +220,9 @@ class Inventory(ttk.Frame):
     def captureItem(self, event):
         codigo = self.captura.get()
         self.captura.delete(0, "end")
+        rw = None
+        if codigo in self.rework:
+            rw = self.rework[codigo]
         if codigo == "":
             return
         codigo = fn.checkCode(codigo)
@@ -198,23 +230,27 @@ class Inventory(ttk.Frame):
             self.statusLabel.config(text="Codigo Incorrecto", bg="#590707")
             return
         if codigo in self.wip:
+            print(codigo)
+            print(self.inventory)
             if codigo not in self.inventory:
+                code = codigo
+                wip_id = f"{str(self.mes)}{str(self.wip[code][12])}"
                 record = [
-                    self.mes + self.wip[codigo][10],
-                    self.wip[codigo][10],
-                    self.wip[codigo][3],
-                    self.wip[codigo][12],
-                    self.wip[codigo][5],
-                    self.wip[codigo][11],
-                    self.wip[codigo][14],
-                    self.station,
+                    wip_id,  # wip id
+                    self.wip[code][12],  # lote
+                    self.wip[code][5],  # modelo
+                    self.wip[code][15],  # item
+                    self.wip[code][7],  # num parte
+                    self.wip[code][14],  # catidad
+                    self.wip[code][17],  # area
+                    self.wip[code][16],  # rank
+                    self.station,  # estacion
                 ]
-                fn.captureRecord(record, self.mes, self.database)
+                fn.captureRecord(record, self.database)
+                fn.updatemonthly_wip(wip_id, self.database)
                 self.updateTables()
                 self.updateLabels()
-                self.statusLabel.config(
-                    text=f"Lote {codigo} inventariado.", bg="#145710"
-                )
+                self.statusLabel.config(text=f"Lote {code} inventariado.", bg="#145710")
             else:
                 self.statusLabel.config(
                     text=f"El lote {codigo} ya esta inventariado.", bg="#7e8a13"

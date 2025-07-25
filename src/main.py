@@ -10,16 +10,15 @@ from Admin import AdminUI
 class Application(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title('Inventario Wip Feeder')
-        self.geometry('800x520')
+        self.title("Inventario Wip Feeder")
+        self.geometry("800x600")
         self.resizable(False, False)
-        self.style = Style('darkly')
+        self.style = Style("darkly")
 
         self.rootPath = "/".join(os.getcwd().split("\\"))
 
         self.container = tk.Frame(self)
-        self.container.pack(side="top", fill="both",
-                            expand=True, padx=20, pady=10)
+        self.container.pack(side="top", fill="both", expand=True, padx=20, pady=10)
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
 
@@ -40,23 +39,22 @@ class Application(tk.Tk):
 
     def addWindow(self, frame):
         frameName = frame.__name__
-        window = frame(parent=self.container,
-                       controller=self, path=self.rootPath)
+        window = frame(parent=self.container, controller=self, path=self.rootPath)
         self.frames[frameName] = window
         window.grid(row=0, column=0, sticky="nsew")
 
     def show_frame(self, page_name):
-        '''Show a frame for the given page name'''
+        """Show a frame for the given page name"""
         self.changeGeometry(page_name)
         frame = self.frames[page_name]
         frame.tkraise()
 
     def changeGeometry(self, window):
         if window == "StartPage":
-            self.geometry('800x520')
+            self.geometry("800x520")
         if window == "Inventory":
-            self.geometry('800x560')
+            self.geometry("800x590")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     Application().mainloop()

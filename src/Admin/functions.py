@@ -67,7 +67,7 @@ def ceckDatabase(date, connection):
     cur = con.cursor()
     cur.execute(
         """
-    SELECT * FROM wip WHERE id LIKE %s LIMIT 10;
+    SELECT * FROM monthly_wip WHERE wip_id LIKE %s LIMIT 10;
                 """,
         (date + "%",),
     )
@@ -176,6 +176,80 @@ def deleteData(month, connection):
         (month + "%",),
     )
     con.commit()
+
+
+def insertIntoZppr(db, filedir):
+    zppr = pd.read_excel(filedir).values.tolist()
+    conn = mariadb.connect(**db)
+    cur = conn.cursor()
+
+    for i in zppr:
+        try:
+            cur.execute(
+                """
+                INSERT INTO zppr1100 (
+                    lot,
+                    estado,
+                    area,
+                    fecha,
+                    modelo,
+                    componente,
+                    item,
+                    ranking,
+                    material,
+                    a_bag,
+                    rev,
+                    cantidad,
+                    retrabajo,
+                    rev_retrabajo,
+                    material_retrabajo,
+                    circuitos,
+                    circuitos_totales
+                    ) VALUES (
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s
+                        );
+                        """,
+                (
+                    i[0],
+                    i[1],
+                    i[2],
+                    i[3].to_pydatetime().strftime("%Y-%m-%d"),
+                    i[4],
+                    i[5],
+                    i[-1],
+                    i[6],
+                    i[7],
+                    i[8],
+                    i[9],
+                    i[10],
+                    i[11],
+                    i[12],
+                    i[13],
+                    i[14],
+                    i[15],
+                ),
+            )
+
+        except mariadb.Error as e:
+            print(f"Error: {e}")
+
+        conn.commit()
 
 
 if __name__ == "__main__":
